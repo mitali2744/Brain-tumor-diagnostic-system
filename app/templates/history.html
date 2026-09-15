@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+
+{% block title %}Scan History — BrainScan AI{% endblock %}
+
+{% block extra_head %}
+<style>
+  .scan-thumb { width: 64px; height: 64px; object-fit: cover; border-radius: 8px; }
+  .label-glioma     { background:#fee2e2; color:#dc2626; }
+  .label-meningioma { background:#fef3c7; color:#d97706; }
+  .label-no-tumor   { background:#dcfce7; color:#16a34a; }
+  .label-pituitary  { background:#ede9fe; color:#7c3aed; }
+  .label-badge { font-size:0.78rem; padding:0.3rem 0.7rem; border-radius:999px; font-weight:600; }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
+  <h4 class="fw-bold mb-0"><i class="bi bi-clock-history me-2"></i>Scan History</h4>
+  <a href="{{ url_for('main.index') }}" class="btn btn-primary btn-sm">
+    <i class="bi bi-upload me-1"></i>New Scan
+  </a>
+</div>
+
+{% if scans.items %}
+<div class="card">
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th class="ps-4">#</th>
+            <th>Thumbnail</th>
+            <th>Filename</th>
+            <th>Diagnosis</th>
+            <th>Confidence</th>
+            <th>Date</th>
+            <th class="text-end pe-4">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for scan in scans.items %}
+          <tr>
+            <td class="ps-4 text-muted small">{{ scan.id }}</td>
+            <td>
+              <img src="{{ url_for('static', filename=scan.upload_path) }}"
+                   alt="MRI" class="scan-thumb" loading="lazy" />
+            </td>
+            <td>
+              <span class="small fw-500">{{ scan.original_filename }}</span>
+            </td>
+            <td>
+              {% set lclass = scan.predicted_label.lower().replace(' ', '-') %}
+              <span class="label-badge label-{{ lclass }}">
+                {% if scan.predicted_label == 'No Tumor' %}✅{% else %}⚠️{% endif %}
+                {{ scan.predicted_label }}
+              </span>
+            </td>
+            <td>
+              <div class="d-flex align-items-center gap-2">
+                <div class="progress flex-fill" style="height:6px; width:80px;">
+                  <div class="progress-bar bg-primary"
+                       style="width: {{ scan.confidence }}%;"></div>
+                </div>
+                <span class="small text-muted">{{ scan.confidence | round(1) }}%</span>
+              </div>
+            </td>
+            <td class="text-muted small">{{ scan.created_at.strftime('%d %b %Y %H:%M') }}</td>
+            <td class="text-end pe-4">
+              <a href="{{ url_for('main.result', scan_id=scan.id) }}"
+                 class="btn btn-sm btn-outline-primary me-1">
+                <i class="bi bi-eye"></i>
+              </a>
+              <form action="{{ url_for('main.delete_scan', scan_id=scan.id) }}"
+                    method="post" class="d-inline"
+                    onsubmit="return confirm('Delete this scan record?')">
+                <button type="submit" class="btn btn-sm btn-outline-danger">
+                  <i class="bi bi-trash"></i>
+                </button>
+              </form>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Pagination -->
+{% if scans.pages > 1 %}
+<nav class="mt-3">
+  <ul class="pagination justify-content-center">
+    {% for page_num in scans.iter_pages(left_edge=2, right_edge=2, left_current=2, right_current=2) %}
+      {% if page_num %}
+        <li class="page-item {% if page_num == scans.page %}active{% endif %}">
+          <a class="page-link" href="{{ url_for('main.history', page=page_num) }}">{{ page_num }}</a>
+        </li>
+      {% else %}
+        <li class="page-item disabled"><span class="page-link">…</span></li>
+      {% endif %}
+    {% endfor %}
+  </ul>
+</nav>
+{% endif %}
+
+{% else %}
+<div class="text-center py-5">
+  <i class="bi bi-folder-x" style="font-size:3rem; color:#94a3b8;"></i>
+  <p class="mt-3 text-muted">No scans yet. Upload your first MRI scan to get started.</p>
+  <a href="{{ url_for('main.index') }}" class="btn btn-primary">
+    <i class="bi bi-upload me-2"></i>Upload MRI Scan
+  </a>
+</div>
+{% endif %}
+
+{% endblock %}

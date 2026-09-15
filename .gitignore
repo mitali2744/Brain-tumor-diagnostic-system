@@ -1,0 +1,29 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+env/
+
+# Data and models (large files — download separately)
+data/Brain Tumor MRI Dataset/
+data/LGG MRI Segmentation/
+data/classification/
+data/segmentation/
+models/*.h5
+models/*.png
+
+# App runtime
+app/database/brain_tumor.db
+app/static/uploads/
+app/static/results/
+!app/static/uploads/.gitkeep
+!app/static/results/.gitkeep
+
+# Notebooks
+.ipynb_checkpoints/
+
+# Misc
+.DS_Store
+*.log

@@ -1,0 +1,184 @@
+{% extends "base.html" %}
+
+{% block title %}Result #{{ scan.id }} — BrainScan AI{% endblock %}
+
+{% block extra_head %}
+<style>
+  .confidence-bar { height: 10px; border-radius: 999px; }
+  .label-badge {
+    font-size: 1.1rem;
+    padding: 0.5rem 1.25rem;
+    border-radius: 999px;
+    font-weight: 600;
+  }
+  .label-glioma     { background: #fee2e2; color: #dc2626; }
+  .label-meningioma { background: #fef3c7; color: #d97706; }
+  .label-no-tumor   { background: #dcfce7; color: #16a34a; }
+  .label-pituitary  { background: #ede9fe; color: #7c3aed; }
+
+  .result-card { border-radius: 12px; overflow: hidden; }
+  .result-card img { width: 100%; border-radius: 0 0 10px 10px; }
+  .result-card .label {
+    background: #1e293b;
+    color: #94a3b8;
+    font-size: 0.78rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 0.5rem 0.75rem;
+  }
+  .prob-row { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.6rem; }
+  .prob-label { width: 110px; font-size: 0.85rem; font-weight: 500; flex-shrink: 0; }
+  .prob-bar-wrap { flex: 1; background: #e2e8f0; border-radius: 999px; height: 10px; overflow: hidden; }
+  .prob-bar { height: 100%; border-radius: 999px; transition: width 1s ease; }
+  .prob-value { width: 50px; font-size: 0.82rem; color: #64748b; text-align: right; flex-shrink: 0; }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
+  <div>
+    <h4 class="fw-bold mb-0">Analysis Result</h4>
+    <span class="text-muted small">
+      Scan #{{ scan.id }} &nbsp;·&nbsp;
+      {{ scan.original_filename }} &nbsp;·&nbsp;
+      {{ scan.created_at.strftime('%d %b %Y, %H:%M') }}
+    </span>
+  </div>
+  <div class="d-flex gap-2">
+    <a href="{{ url_for('main.index') }}" class="btn btn-outline-primary btn-sm">
+      <i class="bi bi-upload me-1"></i>New Scan
+    </a>
+    <a href="{{ url_for('main.history') }}" class="btn btn-outline-secondary btn-sm">
+      <i class="bi bi-clock-history me-1"></i>History
+    </a>
+  </div>
+</div>
+
+<!-- ── Prediction Summary ─────────────────────────────────────────── -->
+<div class="card mb-4">
+  <div class="card-body d-flex flex-wrap align-items-center gap-3 py-3 px-4">
+    <div>
+      <p class="text-muted small mb-1 fw-600">DIAGNOSIS</p>
+      {% set lclass = scan.predicted_label.lower().replace(' ', '-') %}
+      <span class="label-badge label-{{ lclass }}">
+        {% if scan.predicted_label == 'No Tumor' %}✅{% else %}⚠️{% endif %}
+        {{ scan.predicted_label }}
+      </span>
+    </div>
+    <div class="vr d-none d-md-block"></div>
+    <div>
+      <p class="text-muted small mb-1 fw-600">CONFIDENCE</p>
+      <span class="fs-4 fw-700 text-primary">{{ scan.confidence | round(1) }}%</span>
+    </div>
+    <div class="vr d-none d-md-block"></div>
+    <!-- Probability bars -->
+    <div class="flex-fill">
+      <p class="text-muted small mb-2 fw-600">CLASS PROBABILITIES</p>
+      {% set bar_colors = {"Glioma": "#dc2626", "Meningioma": "#d97706", "No Tumor": "#16a34a", "Pituitary": "#7c3aed"} %}
+      {% for label, prob in probs.items() %}
+        <div class="prob-row">
+          <span class="prob-label">{{ label }}</span>
+          <div class="prob-bar-wrap">
+            <div class="prob-bar"
+                 style="width: {{ prob }}%; background: {{ bar_colors.get(label, '#2563eb') }};"></div>
+          </div>
+          <span class="prob-value">{{ prob }}%</span>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+<!-- ── Image Results Grid ──────────────────────────────────────────── -->
+<div class="row g-3 mb-4">
+
+  <!-- Original MRI -->
+  <div class="col-md-4">
+    <div class="card result-card h-100">
+      <div class="label"><i class="bi bi-image me-1"></i>Original MRI Scan</div>
+      <img src="{{ url_for('static', filename=scan.upload_path) }}"
+           alt="Original MRI" loading="lazy" />
+    </div>
+  </div>
+
+  <!-- Segmentation -->
+  <div class="col-md-4">
+    <div class="card result-card h-100">
+      <div class="label"><i class="bi bi-crop me-1"></i>U-Net Segmentation Mask</div>
+      {% if scan.segmentation_path %}
+        <img src="{{ url_for('static', filename=scan.segmentation_path) }}"
+             alt="Segmentation Mask" loading="lazy" />
+      {% else %}
+        <div class="d-flex align-items-center justify-content-center p-4 text-muted">
+          <i class="bi bi-slash-circle me-2"></i>Not available
+        </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Grad-CAM -->
+  <div class="col-md-4">
+    <div class="card result-card h-100">
+      <div class="label"><i class="bi bi-fire me-1"></i>Grad-CAM Heatmap</div>
+      {% if scan.gradcam_path %}
+        <img src="{{ url_for('static', filename=scan.gradcam_path) }}"
+             alt="Grad-CAM Heatmap" loading="lazy" />
+      {% else %}
+        <div class="d-flex align-items-center justify-content-center p-4 text-muted">
+          <i class="bi bi-slash-circle me-2"></i>Not available
+        </div>
+      {% endif %}
+    </div>
+  </div>
+
+</div>
+
+<!-- ── Composite ─────────────────────────────────────────────────────── -->
+{% if scan.composite_path %}
+<div class="card mb-4">
+  <div class="card-header"><i class="bi bi-grid me-2"></i>Full Diagnostic Summary</div>
+  <div class="card-body p-2">
+    <img src="{{ url_for('static', filename=scan.composite_path) }}"
+         alt="Composite Result" class="img-fluid rounded" loading="lazy" />
+  </div>
+</div>
+{% endif %}
+
+<!-- ── Explanation Box ──────────────────────────────────────────────── -->
+<div class="card">
+  <div class="card-header"><i class="bi bi-lightbulb me-2"></i>How to Interpret These Results</div>
+  <div class="card-body">
+    <div class="row g-3">
+      <div class="col-md-4">
+        <h6 class="fw-600">Segmentation Mask</h6>
+        <p class="text-muted small mb-0">
+          White pixels indicate regions identified as tumor tissue by the U-Net model.
+          This gives the spatial extent and location of the lesion.
+        </p>
+      </div>
+      <div class="col-md-4">
+        <h6 class="fw-600">Grad-CAM Heatmap</h6>
+        <p class="text-muted small mb-0">
+          Hot (red/yellow) areas are the regions that most influenced the classification decision.
+          If the hotspot aligns with the tumor region, the model is attending to the right area.
+        </p>
+      </div>
+      <div class="col-md-4">
+        <h6 class="fw-600">Confidence Score</h6>
+        <p class="text-muted small mb-0">
+          The probability assigned to the top predicted class. Higher values (&gt;90%)
+          indicate stronger model certainty. Always consult a qualified radiologist.
+        </p>
+      </div>
+    </div>
+    <div class="alert alert-warning mt-3 mb-0 small">
+      <i class="bi bi-exclamation-triangle-fill me-2"></i>
+      <strong>Medical Disclaimer:</strong> This tool is intended for research and educational purposes only.
+      It is not a substitute for professional medical advice, diagnosis, or treatment.
+    </div>
+  </div>
+</div>
+
+{% endblock %}
