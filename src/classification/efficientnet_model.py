@@ -43,9 +43,16 @@ def build_classifier(num_classes: int = config.NUM_CLASSES, dropout_rate: float 
 
     inputs = layers.Input(shape=(config.IMG_HEIGHT, config.IMG_WIDTH, config.IMG_CHANNELS), name="mri_input")
 
-    # Pass through EfficientNetB0
+    # The application model includes its own ImageNet preprocessing and expects
+    # pixels in [0, 255]. Project preprocessing emits [0, 1], so restore the
+    # expected range before passing inputs to EfficientNetB0.
+    scaled_inputs = layers.Rescaling(255.0, name="restore_pixel_scale")(inputs)
+
     # training=False keeps BatchNorm in inference mode during Phase 1
-    x = base_model(inputs, training=False)
+    x = base_model(scaled_inputs, training=False)
+    # Expose a connected top-level feature tensor for Grad-CAM. Accessing an
+    # internal tensor from a nested Keras application model is not graph-safe.
+    x = layers.Activation("linear", name="gradcam_features")(x)
 
     # Classification head
     x = layers.GlobalAveragePooling2D(name="gap")(x)

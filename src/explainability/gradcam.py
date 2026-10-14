@@ -154,4 +154,8 @@ def find_last_conv_layer(model: tf.keras.Model) -> str:
     for layer in reversed(model.layers):
         if isinstance(layer, tf.keras.layers.Conv2D):
             return layer.name
+        # Prefer a connected top-level spatial feature layer exposed by a
+        # nested application backbone (e.g. EfficientNet).
+        if len(layer.output.shape) == 4 and layer.name == config.GRADCAM_LAYER:
+            return layer.name
     raise ValueError("No Conv2D layer found in model.")

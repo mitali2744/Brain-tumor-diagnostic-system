@@ -47,7 +47,8 @@ def get_classifier():
                 "Run train_classification.py first."
             )
         print("[Pipeline] Loading classifier model...")
-        _classifier = load_classifier()
+        from tensorflow.keras.models import load_model
+        _classifier = load_model(config.CLASSIFIER_MODEL_PATH)
     return _classifier
 
 
@@ -60,7 +61,16 @@ def get_segmentor():
                 "Run train_segmentation.py first."
             )
         print("[Pipeline] Loading segmentation model...")
-        _segmentor = load_unet()
+        from tensorflow.keras.models import load_model
+        from src.segmentation.unet import combined_loss, dice_coefficient, dice_loss
+        _segmentor = load_model(
+            config.SEGMENTATION_MODEL_PATH,
+            custom_objects={
+                'combined_loss': combined_loss,
+                'dice_coefficient': dice_coefficient,
+                'dice_loss': dice_loss,
+            }
+        )
     return _segmentor
 
 
@@ -98,7 +108,7 @@ def run_pipeline(image_path: str, original_filename: str) -> dict:
     scan_id = str(uuid.uuid4())[:8]
 
     # ── Step 1: Preprocess for classification ────────────────────────────────
-    clf_img = preprocess_for_classification(image_path, apply_skull_strip=True)
+    clf_img = preprocess_for_classification(image_path, apply_skull_strip=False)
 
     # ── Step 2: Preprocess for segmentation ──────────────────────────────────
     seg_img = preprocess_for_segmentation(image_path)   # (256, 256, 3) float32

@@ -13,7 +13,6 @@ import cv2
 import numpy as np
 from PIL import Image
 import albumentations as A
-from albumentations.pytorch import ToTensorV2
 import sys
 import os
 

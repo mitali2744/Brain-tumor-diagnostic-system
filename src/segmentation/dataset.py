@@ -68,7 +68,7 @@ class SegmentationDataGenerator(tf.keras.utils.Sequence):
             np.random.shuffle(self.indices)
 
     def __len__(self):
-        return max(1, len(self.pairs) // self.batch_size)
+        return (len(self.pairs) + self.batch_size - 1) // self.batch_size
 
     def __getitem__(self, idx):
         batch_indices = self.indices[idx * self.batch_size : (idx + 1) * self.batch_size]

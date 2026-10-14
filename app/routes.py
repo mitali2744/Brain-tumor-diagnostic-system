@@ -42,7 +42,11 @@ def allowed_file(filename: str) -> bool:
 
 @bp.route("/", methods=["GET"])
 def index():
-    return render_template("index.html")
+    models_ready = (
+        os.path.exists(config.CLASSIFIER_MODEL_PATH)
+        and os.path.exists(config.SEGMENTATION_MODEL_PATH)
+    )
+    return render_template("index.html", models_ready=models_ready)
 
 
 # ─── Predict ──────────────────────────────────────────────────────────────────

@@ -15,8 +15,8 @@ CLASSIFICATION_DATA_DIR = os.path.join(DATA_DIR, "Brain Tumor MRI Dataset")
 SEGMENTATION_DATA_DIR = os.path.join(DATA_DIR, "LGG MRI Segmentation", "kaggle_3m")
 
 # ─── Model Save Paths ─────────────────────────────────────────────────────────
-CLASSIFIER_MODEL_PATH = os.path.join(MODELS_DIR, "efficientnetb0_classifier.h5")
-SEGMENTATION_MODEL_PATH = os.path.join(MODELS_DIR, "unet_segmentation.h5")
+CLASSIFIER_MODEL_PATH = os.path.join(MODELS_DIR, "efficientnetb0_classifier.keras")
+SEGMENTATION_MODEL_PATH = os.path.join(MODELS_DIR, "unet_segmentation.keras")
 
 # ─── Image Config ─────────────────────────────────────────────────────────────
 IMG_HEIGHT = 224
@@ -39,7 +39,7 @@ LEARNING_RATE = 1e-4
 VALIDATION_SPLIT = 0.2
 
 # ─── Grad-CAM Config ──────────────────────────────────────────────────────────
-GRADCAM_LAYER = "top_conv"          # Last conv layer in EfficientNetB0
+GRADCAM_LAYER = "gradcam_features"  # Connected feature map exposed by the classifier
 GRADCAM_ALPHA = 0.4                 # Heatmap blend strength
 
 # ─── Flask / App Config ───────────────────────────────────────────────────────
