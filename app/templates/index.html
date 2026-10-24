@@ -36,10 +36,17 @@
 .upload-icon{width:80px;height:80px;border-radius:24px;background:linear-gradient(135deg,rgba(79,140,255,.2),rgba(29,226,212,.15));border:1px solid rgba(79,140,255,.3);display:inline-flex;align-items:center;justify-content:center;font-size:2.2rem;color:#7ab8ff;margin-bottom:1.2rem;box-shadow:0 10px 25px rgba(79,140,255,.2);}
 #preview-container{display:none;}
 #preview-img{max-height:260px;border-radius:18px;border:1px solid rgba(255,255,255,.1);box-shadow:0 18px 32px rgba(0,0,0,.4);}
-.feature-card{background:linear-gradient(180deg,rgba(20,34,54,.88),rgba(12,20,35,.85));border:1px solid rgba(255,255,255,.06);border-radius:18px;padding:1.6rem 1.4rem;height:100%;transition:all .3s ease;position:relative;overflow:hidden;}
+.feature-card{background:linear-gradient(180deg,rgba(20,34,54,.88),rgba(12,20,35,.85));border:1px solid rgba(255,255,255,.06);border-radius:16px;padding:.9rem 1rem;height:auto;min-height:0;transition:all .25s ease;position:relative;overflow:hidden;}
 .feature-card::after{content:"";position:absolute;bottom:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--fc1),var(--fc2));transform:scaleX(0);transition:transform .3s;}
-.feature-card:hover{transform:translateY(-6px);border-color:rgba(79,140,255,.3);}
+.feature-card:hover{transform:translateY(-3px);border-color:rgba(79,140,255,.3);box-shadow:0 12px 24px rgba(0,0,0,.2);}
 .feature-card:hover::after{transform:scaleX(1);}
+.feature-grid{display:grid;grid-template-columns:1fr;gap:.7rem;}
+.feature-grid .feature-card{margin:0!important;}
+.upload-info-column{align-self:flex-start;}
+.upload-info-card{height:auto!important;}
+.medical-disclaimer{position:relative;z-index:1;clear:both;margin-top:2rem!important;}
+@media (min-width:1200px){.feature-grid{grid-template-columns:1fr 1fr;}.feature-grid .feature-card{height:100%;}}
+@media (max-width:767.98px){.hero-section{min-height:auto;padding:2rem 0 1rem;}.hero-section .row{min-height:auto!important;}.hero-left{padding:2rem .5rem 1rem;}.hero-right{min-height:330px;}#brain-canvas{height:340px;}.section-divider{margin:1rem 0 1.5rem;}section.container.reveal{padding-top:2rem!important;padding-bottom:2.5rem!important;}#upload{scroll-margin-top:1rem;}.upload-zone{padding:2rem 1rem;}.medical-disclaimer{margin-top:1.25rem!important;padding:1rem!important;}}
 .accuracy-banner{background:linear-gradient(135deg,rgba(79,140,255,.12),rgba(29,226,212,.08));border:1px solid rgba(79,140,255,.2);border-radius:24px;padding:2.5rem 2rem;margin:2rem 0 3rem;}
 .acc-value{font-size:2.4rem;font-weight:800;background:linear-gradient(135deg,#4f8cff,#1de2d4);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;line-height:1;margin-bottom:.3rem;}
 .acc-label{font-size:.82rem;color:#7a9ec0;font-weight:600;text-transform:uppercase;letter-spacing:.06em;}
@@ -136,21 +143,23 @@
         </div>
       </div>
     </div>
-    <div class="col-lg-4">
-      <div class="card h-100">
+    <div class="col-lg-4 upload-info-column">
+      <div class="card upload-info-card">
         <div class="card-header"><i class="bi bi-stars me-2"></i>What You Will Receive</div>
-        <div class="card-body p-4">
-          <div class="feature-card mb-3" style="--fc1:#4f8cff;--fc2:#1de2d4;padding:1rem 1.2rem;"><div class="d-flex align-items-center gap-3"><span style="font-size:1.5rem;">&#x1F3F7;&#xFE0F;</span><div><div class="fw-700" style="color:#cce4ff;">Tumor Classification</div><div class="text-muted small">Glioma &middot; Meningioma &middot; Pituitary &middot; No Tumor</div></div></div></div>
-          <div class="feature-card mb-3" style="--fc1:#1de2d4;--fc2:#06b6d4;padding:1rem 1.2rem;"><div class="d-flex align-items-center gap-3"><span style="font-size:1.5rem;">&#x1F50D;</span><div><div class="fw-700" style="color:#cce4ff;">Segmentation Mask</div><div class="text-muted small">Pixel-level tumor boundary</div></div></div></div>
-          <div class="feature-card mb-3" style="--fc1:#fbbf24;--fc2:#f59e0b;padding:1rem 1.2rem;"><div class="d-flex align-items-center gap-3"><span style="font-size:1.5rem;">&#x1F321;&#xFE0F;</span><div><div class="fw-700" style="color:#cce4ff;">Grad-CAM Heatmap</div><div class="text-muted small">Visual AI explainability</div></div></div></div>
-          <div class="feature-card" style="--fc1:#8b5cf6;--fc2:#7c3aed;padding:1rem 1.2rem;"><div class="d-flex align-items-center gap-3"><span style="font-size:1.5rem;">&#x1F4CA;</span><div><div class="fw-700" style="color:#cce4ff;">Confidence Scores</div><div class="text-muted small">Per-class probability breakdown</div></div></div></div>
+        <div class="card-body p-3">
+          <div class="feature-grid">
+            <div class="feature-card" style="--fc1:#4f8cff;--fc2:#1de2d4;"><div class="d-flex align-items-center gap-3"><span style="font-size:1.5rem;">&#x1F3F7;&#xFE0F;</span><div><div class="fw-700" style="color:#cce4ff;">Tumor Classification</div><div class="text-muted small">Glioma &middot; Meningioma &middot; Pituitary &middot; No Tumor</div></div></div></div>
+            <div class="feature-card" style="--fc1:#1de2d4;--fc2:#06b6d4;"><div class="d-flex align-items-center gap-3"><span style="font-size:1.5rem;">&#x1F50D;</span><div><div class="fw-700" style="color:#cce4ff;">Segmentation Mask</div><div class="text-muted small">Pixel-level tumor boundary</div></div></div></div>
+            <div class="feature-card" style="--fc1:#fbbf24;--fc2:#f59e0b;"><div class="d-flex align-items-center gap-3"><span style="font-size:1.5rem;">&#x1F321;&#xFE0F;</span><div><div class="fw-700" style="color:#cce4ff;">Grad-CAM Heatmap</div><div class="text-muted small">Visual AI explainability</div></div></div></div>
+            <div class="feature-card" style="--fc1:#8b5cf6;--fc2:#7c3aed;"><div class="d-flex align-items-center gap-3"><span style="font-size:1.5rem;">&#x1F4CA;</span><div><div class="fw-700" style="color:#cce4ff;">Confidence Scores</div><div class="text-muted small">Per-class probability breakdown</div></div></div></div>
+          </div>
         </div>
       </div>
     </div>
   </div>
 </section>
 
-<div class="container pb-4">
+<div class="container pb-4 medical-disclaimer">
   <div class="text-center" style="padding:1.5rem;border-radius:16px;background:rgba(255,93,122,.08);border:1px solid rgba(255,93,122,.2);">
     <i class="bi bi-shield-exclamation me-2" style="color:#ff8fa3;"></i>
     <span class="small" style="color:#ffb3c1;"><strong>Medical Disclaimer:</strong> This system is intended for research and educational purposes only. Not a substitute for professional medical advice. Consult a qualified radiologist for clinical decisions.</span>
