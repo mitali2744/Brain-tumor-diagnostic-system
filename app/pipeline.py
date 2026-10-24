@@ -1,4 +1,4 @@
-"""
+﻿"""
 Inference Pipeline
 -------------------
 Central module called by Flask routes to run the full pipeline on an uploaded MRI:
@@ -24,7 +24,11 @@ import cv2
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 import config
 from src.preprocessing.preprocess import preprocess_for_classification, preprocess_for_segmentation
-from src.classification.efficientnet_model import load_classifier, predict_tumor_type
+from src.classification.efficientnet_model import (
+    load_classifier,
+    predict_tumor_type,
+    prepare_classifier_input,
+)
 from src.segmentation.unet import load_unet
 from src.explainability.gradcam import generate_gradcam_visualization, find_last_conv_layer
 from src.utils.visualization import save_mask_as_image, create_result_composite
@@ -32,7 +36,7 @@ from src.utils.visualization import save_mask_as_image, create_result_composite
 os.makedirs(config.UPLOAD_FOLDER, exist_ok=True)
 os.makedirs(config.RESULTS_FOLDER, exist_ok=True)
 
-# ─── Singleton model loading ──────────────────────────────────────────────────
+# â”€â”€â”€ Singleton model loading â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 _classifier = None
 _segmentor = None
 _gradcam_layer = None
@@ -47,8 +51,7 @@ def get_classifier():
                 "Run train_classification.py first."
             )
         print("[Pipeline] Loading classifier model...")
-        from tensorflow.keras.models import load_model
-        _classifier = load_model(config.CLASSIFIER_MODEL_PATH)
+        _classifier = load_classifier(config.CLASSIFIER_MODEL_PATH)
     return _classifier
 
 
@@ -61,16 +64,7 @@ def get_segmentor():
                 "Run train_segmentation.py first."
             )
         print("[Pipeline] Loading segmentation model...")
-        from tensorflow.keras.models import load_model
-        from src.segmentation.unet import combined_loss, dice_coefficient, dice_loss
-        _segmentor = load_model(
-            config.SEGMENTATION_MODEL_PATH,
-            custom_objects={
-                'combined_loss': combined_loss,
-                'dice_coefficient': dice_coefficient,
-                'dice_loss': dice_loss,
-            }
-        )
+        _segmentor = load_unet(config.SEGMENTATION_MODEL_PATH)
     return _segmentor
 
 
@@ -89,7 +83,7 @@ def get_gradcam_layer():
     return _gradcam_layer
 
 
-# ─── Core pipeline ────────────────────────────────────────────────────────────
+# â”€â”€â”€ Core pipeline â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 def run_pipeline(image_path: str, original_filename: str) -> dict:
     """
@@ -107,31 +101,34 @@ def run_pipeline(image_path: str, original_filename: str) -> dict:
     """
     scan_id = str(uuid.uuid4())[:8]
 
-    # ── Step 1: Preprocess for classification ────────────────────────────────
+    # â”€â”€ Step 1: Preprocess for classification â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     clf_img = preprocess_for_classification(image_path, apply_skull_strip=False)
 
-    # ── Step 2: Preprocess for segmentation ──────────────────────────────────
+    # â”€â”€ Step 2: Preprocess for segmentation â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     seg_img = preprocess_for_segmentation(image_path)   # (256, 256, 3) float32
 
-    # ── Step 3: Classification ────────────────────────────────────────────────
+    # â”€â”€ Step 3: Classification â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     classifier = get_classifier()
-    prediction = predict_tumor_type(classifier, clf_img)
+    classifier_img = prepare_classifier_input(classifier, clf_img)
+    prediction = predict_tumor_type(classifier, classifier_img)
 
-    # ── Step 4: Segmentation ──────────────────────────────────────────────────
+    # â”€â”€ Step 4: Segmentation â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     segmentor = get_segmentor()
     seg_input = np.expand_dims(seg_img, axis=0)                       # (1, 256, 256, 3)
     seg_prob   = segmentor.predict(seg_input, verbose=0)[0]            # (256, 256, 1)
     seg_binary = (seg_prob > config.SEG_THRESHOLD).astype(np.float32)
 
-    # ── Step 5: Grad-CAM ──────────────────────────────────────────────────────
+    # â”€â”€ Step 5: Grad-CAM â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     gradcam_layer = get_gradcam_layer()
     gradcam_img = generate_gradcam_visualization(
         classifier,
-        clf_img,
+        classifier_img,
         pred_class_idx=prediction["predicted_class"],
+        last_conv_layer_name=gradcam_layer,
+        display_image=clf_img,
     )
 
-    # ── Step 6: Save output images ────────────────────────────────────────────
+    # â”€â”€ Step 6: Save output images â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     # Segmentation mask
     seg_filename = f"seg_{scan_id}.png"
     seg_save_path = os.path.join(config.RESULTS_FOLDER, seg_filename)
@@ -147,7 +144,7 @@ def run_pipeline(image_path: str, original_filename: str) -> dict:
     composite_save_path = os.path.join(config.RESULTS_FOLDER, composite_filename)
     create_result_composite(clf_img, seg_binary, gradcam_img, prediction, save_path=composite_save_path)
 
-    # ── Step 7: Build result dict ─────────────────────────────────────────────
+    # â”€â”€ Step 7: Build result dict â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     # Paths relative to app/static/ for use with url_for('static', filename=...)
     def to_static_rel(abs_path):
         static_dir = os.path.join(os.path.dirname(__file__), "static")

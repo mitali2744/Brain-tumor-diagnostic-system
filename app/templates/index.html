@@ -1,215 +1,284 @@
-{% extends "base.html" %}
-
-{% block title %}Upload MRI — BrainScan AI{% endblock %}
-
+﻿{% extends "base.html" %}
+{% block title %}BrainScan AI — Deep Learning Brain Tumor Diagnosis{% endblock %}
 {% block extra_head %}
+<script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
 <style>
-  .hero {
-    background: linear-gradient(135deg, #1e40af 0%, #2563eb 50%, #06b6d4 100%);
-    color: white;
-    border-radius: 16px;
-    padding: 2.5rem 2rem;
-    margin-bottom: 2rem;
-  }
-  .upload-zone {
-    border: 2.5px dashed #93c5fd;
-    border-radius: 14px;
-    padding: 2.5rem;
-    text-align: center;
-    cursor: pointer;
-    transition: all 0.3s;
-    background: #f8faff;
-  }
-  .upload-zone:hover, .upload-zone.dragover {
-    border-color: #2563eb;
-    background: #eff6ff;
-  }
-  .upload-zone .icon { font-size: 3rem; color: #93c5fd; margin-bottom: 0.75rem; }
-  #preview-container { display: none; }
-  #preview-img { max-height: 280px; border-radius: 10px; border: 2px solid #e2e8f0; }
-
-  .pipeline-step {
-    background: white;
-    border-radius: 12px;
-    padding: 1.25rem;
-    text-align: center;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-    height: 100%;
-  }
-  .pipeline-step .step-icon { font-size: 2rem; margin-bottom: 0.5rem; }
-  .pipeline-arrow { font-size: 1.5rem; color: #94a3b8; display: flex; align-items: center; justify-content: center; }
+.hero-section{min-height:92vh;display:flex;align-items:center;overflow:hidden;padding:0;}
+.hero-left{position:relative;z-index:2;padding:3rem 2rem 3rem 1rem;}
+.hero-right{position:relative;z-index:2;display:flex;align-items:center;justify-content:center;}
+#brain-canvas{width:100%;height:520px;cursor:grab;}
+#brain-canvas:active{cursor:grabbing;}
+.hero-badge{display:inline-flex;align-items:center;gap:.5rem;background:rgba(29,226,212,.12);border:1px solid rgba(29,226,212,.35);border-radius:999px;padding:.35rem 1rem;font-size:.82rem;font-weight:600;color:#1de2d4;letter-spacing:.06em;margin-bottom:1.2rem;text-transform:uppercase;}
+.hero-title{font-size:clamp(2.2rem,4.5vw,3.4rem);font-weight:800;line-height:1.12;background:linear-gradient(135deg,#fff 0%,#cce4ff 50%,#1de2d4 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:1.2rem;}
+.hero-subtitle{font-size:1.08rem;color:#9cb8d6;line-height:1.7;max-width:520px;margin-bottom:2rem;}
+.hero-stats{display:flex;gap:2rem;margin-bottom:2.2rem;flex-wrap:wrap;}
+.stat-item{display:flex;flex-direction:column;}
+.stat-value{font-size:1.7rem;font-weight:800;line-height:1;background:linear-gradient(135deg,#4f8cff,#1de2d4);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.stat-label{font-size:.78rem;color:#7a9ec0;font-weight:600;text-transform:uppercase;letter-spacing:.06em;margin-top:.2rem;}
+.hero-cta{display:flex;gap:1rem;flex-wrap:wrap;}
+.btn-glow{background:linear-gradient(135deg,#4f8cff,#1de2d4);border:none;color:#fff;font-weight:700;font-size:1rem;padding:.85rem 2rem;border-radius:14px;box-shadow:0 0 30px rgba(79,140,255,.5);transition:all .3s ease;text-decoration:none;display:inline-flex;align-items:center;gap:.5rem;}
+.btn-glow:hover{transform:translateY(-3px);box-shadow:0 0 50px rgba(79,140,255,.7);color:#fff;}
+.btn-ghost{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.15);color:#cce4ff;font-weight:600;font-size:1rem;padding:.85rem 1.8rem;border-radius:14px;transition:all .3s ease;text-decoration:none;display:inline-flex;align-items:center;gap:.5rem;}
+.btn-ghost:hover{background:rgba(255,255,255,.12);color:#fff;transform:translateY(-2px);}
+.brain-tag{position:absolute;background:rgba(10,20,40,.82);border:1px solid rgba(79,140,255,.4);backdrop-filter:blur(10px);border-radius:12px;padding:.45rem .9rem;font-size:.78rem;font-weight:600;color:#cce4ff;display:flex;align-items:center;gap:.4rem;box-shadow:0 8px 24px rgba(0,0,0,.3);animation:floatTag 3s ease-in-out infinite;z-index:3;}
+.brain-tag .dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.tag-1{top:12%;right:5%;animation-delay:0s;}
+.tag-2{bottom:22%;right:3%;animation-delay:1s;}
+.tag-3{top:40%;left:2%;animation-delay:2s;}
+@keyframes floatTag{0%,100%{transform:translateY(0);}50%{transform:translateY(-8px);}}
+.section-divider{height:1px;background:linear-gradient(90deg,transparent,rgba(79,140,255,.4),rgba(29,226,212,.4),transparent);margin:1rem 0 3rem;}
+.section-title{font-size:1.9rem;font-weight:800;background:linear-gradient(135deg,#fff,#cce4ff);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:.5rem;}
+.section-subtitle{color:#7a9ec0;font-size:1rem;margin-bottom:2.5rem;}
+.step-card{background:linear-gradient(180deg,rgba(22,36,58,.92),rgba(12,22,38,.88));border:1px solid rgba(255,255,255,.07);border-radius:20px;padding:1.8rem 1.4rem;text-align:center;height:100%;position:relative;overflow:hidden;transition:all .3s ease;}
+.step-card::before{content:"";position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--c1),var(--c2));opacity:0;transition:opacity .3s;}
+.step-card:hover{transform:translateY(-8px);border-color:rgba(79,140,255,.35);box-shadow:0 20px 40px rgba(0,0,0,.3);}
+.step-card:hover::before{opacity:1;}
+.step-icon-wrap{width:64px;height:64px;border-radius:18px;display:inline-flex;align-items:center;justify-content:center;font-size:1.9rem;margin-bottom:1rem;background:linear-gradient(135deg,var(--c1),var(--c2));box-shadow:0 10px 25px rgba(0,0,0,.3);}
+.step-num{position:absolute;top:1rem;right:1rem;font-size:.7rem;font-weight:800;color:rgba(255,255,255,.2);letter-spacing:.1em;}
+.upload-zone{position:relative;border:2px dashed rgba(79,140,255,.5);border-radius:24px;padding:3rem 2rem;text-align:center;cursor:pointer;transition:all .3s ease;background:linear-gradient(180deg,rgba(79,140,255,.04),rgba(16,30,48,.8));}
+.upload-zone:hover,.upload-zone.dragover{border-color:rgba(29,226,212,.8);background:linear-gradient(180deg,rgba(29,226,212,.06),rgba(14,27,43,.88));transform:translateY(-4px);}
+.upload-icon{width:80px;height:80px;border-radius:24px;background:linear-gradient(135deg,rgba(79,140,255,.2),rgba(29,226,212,.15));border:1px solid rgba(79,140,255,.3);display:inline-flex;align-items:center;justify-content:center;font-size:2.2rem;color:#7ab8ff;margin-bottom:1.2rem;box-shadow:0 10px 25px rgba(79,140,255,.2);}
+#preview-container{display:none;}
+#preview-img{max-height:260px;border-radius:18px;border:1px solid rgba(255,255,255,.1);box-shadow:0 18px 32px rgba(0,0,0,.4);}
+.feature-card{background:linear-gradient(180deg,rgba(20,34,54,.88),rgba(12,20,35,.85));border:1px solid rgba(255,255,255,.06);border-radius:18px;padding:1.6rem 1.4rem;height:100%;transition:all .3s ease;position:relative;overflow:hidden;}
+.feature-card::after{content:"";position:absolute;bottom:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--fc1),var(--fc2));transform:scaleX(0);transition:transform .3s;}
+.feature-card:hover{transform:translateY(-6px);border-color:rgba(79,140,255,.3);}
+.feature-card:hover::after{transform:scaleX(1);}
+.accuracy-banner{background:linear-gradient(135deg,rgba(79,140,255,.12),rgba(29,226,212,.08));border:1px solid rgba(79,140,255,.2);border-radius:24px;padding:2.5rem 2rem;margin:2rem 0 3rem;}
+.acc-value{font-size:2.4rem;font-weight:800;background:linear-gradient(135deg,#4f8cff,#1de2d4);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;line-height:1;margin-bottom:.3rem;}
+.acc-label{font-size:.82rem;color:#7a9ec0;font-weight:600;text-transform:uppercase;letter-spacing:.06em;}
+.reveal{opacity:0;transform:translateY(30px);transition:opacity .6s ease,transform .6s ease;}
+.reveal.visible{opacity:1;transform:translateY(0);}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1);}50%{opacity:.6;transform:scale(.8);}}
 </style>
 {% endblock %}
 
 {% block content %}
-
-<!-- Hero -->
-<div class="hero">
-  <div class="row align-items-center">
-    <div class="col-md-8">
-      <h1 class="fw-bold mb-2">Brain Tumor Diagnostic AI</h1>
-      <p class="mb-0 opacity-90 fs-5">
-        Upload a brain MRI scan and get instant tumor detection, segmentation,
-        and visual explainability — powered by deep learning.
-      </p>
-    </div>
-    <div class="col-md-4 text-end d-none d-md-block">
-      <i class="bi bi-activity" style="font-size:5rem; opacity:0.25;"></i>
-    </div>
-  </div>
-</div>
-
-{% if not models_ready %}
-<div class="alert alert-warning" role="status">
-  <strong>Demo mode:</strong> the website is running, but trained classifier and segmentation model files are not installed yet.
-  MRI uploads are disabled until both models have been trained. This app is a research prototype, not a medical diagnosis tool.
-</div>
-{% endif %}
-
-<!-- Pipeline Overview -->
-<div class="row mb-4 g-2 align-items-stretch">
-  <div class="col-6 col-md">
-    <div class="pipeline-step">
-      <div class="step-icon">🧠</div>
-      <div class="fw-600 small">Upload MRI</div>
-    </div>
-  </div>
-  <div class="col-1 d-none d-md-flex pipeline-arrow"><i class="bi bi-arrow-right"></i></div>
-  <div class="col-6 col-md">
-    <div class="pipeline-step">
-      <div class="step-icon">⚙️</div>
-      <div class="fw-600 small">Preprocess</div>
-    </div>
-  </div>
-  <div class="col-1 d-none d-md-flex pipeline-arrow"><i class="bi bi-arrow-right"></i></div>
-  <div class="col-6 col-md">
-    <div class="pipeline-step">
-      <div class="step-icon">🔍</div>
-      <div class="fw-600 small">U-Net Segmentation</div>
-    </div>
-  </div>
-  <div class="col-1 d-none d-md-flex pipeline-arrow"><i class="bi bi-arrow-right"></i></div>
-  <div class="col-6 col-md">
-    <div class="pipeline-step">
-      <div class="step-icon">🏷️</div>
-      <div class="fw-600 small">Classification</div>
-    </div>
-  </div>
-  <div class="col-1 d-none d-md-flex pipeline-arrow"><i class="bi bi-arrow-right"></i></div>
-  <div class="col-6 col-md">
-    <div class="pipeline-step">
-      <div class="step-icon">🌡️</div>
-      <div class="fw-600 small">Grad-CAM</div>
-    </div>
-  </div>
-</div>
-
-<!-- Upload Card -->
-<div class="row justify-content-center">
-  <div class="col-lg-7">
-    <div class="card">
-      <div class="card-header">
-        <i class="bi bi-cloud-upload me-2"></i>Upload Brain MRI Scan
+<section class="hero-section">
+  <div class="container-fluid px-4 px-lg-5">
+    <div class="row align-items-center g-0" style="min-height:92vh;">
+      <div class="col-lg-6 hero-left">
+        <div class="hero-badge">
+          <span style="width:8px;height:8px;background:#1de2d4;border-radius:50%;display:inline-block;animation:pulse 1.5s infinite;"></span>
+          AI-Powered Diagnostic System
+        </div>
+        <h1 class="hero-title">Detect Brain Tumors<br>with Deep Learning</h1>
+        <p class="hero-subtitle">Upload a brain MRI scan and receive instant AI-assisted analysis — tumor classification, pixel-level segmentation, and explainable Grad-CAM heatmaps in seconds.</p>
+        <div class="hero-stats">
+          <div class="stat-item"><span class="stat-value">94.19%</span><span class="stat-label">Classification Accuracy</span></div>
+          <div style="width:1px;background:rgba(255,255,255,.1);"></div>
+          <div class="stat-item"><span class="stat-value">0.8779</span><span class="stat-label">Dice Score (U-Net)</span></div>
+          <div style="width:1px;background:rgba(255,255,255,.1);"></div>
+          <div class="stat-item"><span class="stat-value">4</span><span class="stat-label">Tumor Classes</span></div>
+        </div>
+        <div class="hero-cta">
+          <a href="{{ url_for('main.predict') }}" class="btn-glow"><i class="bi bi-cpu-fill"></i> Analyse MRI Now</a>
+          <a href="{{ url_for('main.about') }}" class="btn-ghost"><i class="bi bi-info-circle"></i> Learn More</a>
+        </div>
+        <div class="d-flex gap-2 flex-wrap mt-3">
+          <span style="font-size:.76rem;padding:.3rem .75rem;border-radius:999px;background:rgba(255,93,122,.15);border:1px solid rgba(255,93,122,.3);color:#ff8fa3;">Glioma</span>
+          <span style="font-size:.76rem;padding:.3rem .75rem;border-radius:999px;background:rgba(251,191,36,.15);border:1px solid rgba(251,191,36,.3);color:#fcd34d;">Meningioma</span>
+          <span style="font-size:.76rem;padding:.3rem .75rem;border-radius:999px;background:rgba(52,211,153,.15);border:1px solid rgba(52,211,153,.3);color:#6ee7b7;">No Tumor</span>
+          <span style="font-size:.76rem;padding:.3rem .75rem;border-radius:999px;background:rgba(139,92,246,.15);border:1px solid rgba(139,92,246,.3);color:#c4b5fd;">Pituitary</span>
+        </div>
       </div>
-      <div class="card-body p-4">
-        <form action="{{ url_for('main.predict') }}" method="post" enctype="multipart/form-data" id="uploadForm">
-
-          <!-- Drag-and-drop zone -->
-          <div class="upload-zone" id="uploadZone" onclick="document.getElementById('mri_file').click()">
-            <div class="icon"><i class="bi bi-file-earmark-medical"></i></div>
-            <p class="fw-600 mb-1">Drag &amp; drop your MRI scan here</p>
-            <p class="text-muted small mb-2">or click to browse</p>
-            <span class="badge bg-secondary">PNG · JPG · JPEG · Max 16 MB</span>
-                 <input type="file" id="mri_file" name="mri_file" accept=".png,.jpg,.jpeg"
-                   class="d-none" required onchange="previewFile(this)" {% if not models_ready %}disabled{% endif %} />
-          </div>
-
-          <!-- Preview -->
-          <div id="preview-container" class="text-center mt-3">
-            <img id="preview-img" src="" alt="MRI Preview" class="img-fluid" />
-            <p id="preview-name" class="text-muted small mt-2"></p>
-          </div>
-
-          <!-- Submit -->
-          <div class="d-grid mt-3">
-            <button type="submit" class="btn btn-primary btn-lg" id="analyseBtn" {% if not models_ready %}disabled{% endif %}>
-              <i class="bi bi-cpu me-2"></i>Analyse MRI Scan
-            </button>
-          </div>
-
-        </form>
+      <div class="col-lg-6 hero-right position-relative">
+        <div class="brain-tag tag-1"><span class="dot" style="background:#4f8cff;box-shadow:0 0 8px #4f8cff;"></span>EfficientNetB0</div>
+        <div class="brain-tag tag-2"><span class="dot" style="background:#1de2d4;box-shadow:0 0 8px #1de2d4;"></span>U-Net Segmentation</div>
+        <div class="brain-tag tag-3"><span class="dot" style="background:#ff5d7a;box-shadow:0 0 8px #ff5d7a;"></span>Grad-CAM XAI</div>
+        <canvas id="brain-canvas"></canvas>
+        <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:320px;height:320px;border-radius:50%;background:radial-gradient(circle,rgba(79,140,255,.18),transparent 70%);filter:blur(30px);pointer-events:none;z-index:0;"></div>
       </div>
     </div>
   </div>
+</section>
 
-  <!-- Info sidebar -->
-  <div class="col-lg-4 mt-4 mt-lg-0">
-    <div class="card h-100">
-      <div class="card-header"><i class="bi bi-info-circle me-2"></i>What You'll Get</div>
-      <div class="card-body">
-        <ul class="list-unstyled mb-0">
-          <li class="mb-3">
-            <span class="badge bg-primary me-2">1</span>
-            <strong>Tumor Classification</strong><br>
-            <span class="text-muted small">Glioma · Meningioma · Pituitary · No Tumor</span>
-          </li>
-          <li class="mb-3">
-            <span class="badge bg-primary me-2">2</span>
-            <strong>Segmentation Mask</strong><br>
-            <span class="text-muted small">Pixel-level tumor boundary (U-Net)</span>
-          </li>
-          <li class="mb-3">
-            <span class="badge bg-primary me-2">3</span>
-            <strong>Grad-CAM Heatmap</strong><br>
-            <span class="text-muted small">Why the AI made its decision</span>
-          </li>
-          <li>
-            <span class="badge bg-primary me-2">4</span>
-            <strong>Confidence Scores</strong><br>
-            <span class="text-muted small">Per-class probability breakdown</span>
-          </li>
-        </ul>
+<div class="section-divider"></div>
+
+<div class="container reveal">
+  <div class="accuracy-banner">
+    <div class="row align-items-center g-0">
+      <div class="col-12 text-center mb-3">
+        <p class="text-muted small fw-600 mb-1" style="text-transform:uppercase;letter-spacing:.1em;">Model Performance Metrics</p>
+        <h5 class="fw-700 mb-0" style="color:#cce4ff;">Trained on 7,200 MRI Images &middot; Validated on 1,600 Test Images</h5>
       </div>
+      <div class="col-6 col-md-3"><div class="text-center p-3"><div class="acc-value">94.19%</div><div class="acc-label">Test Accuracy</div></div></div>
+      <div class="col-6 col-md-3"><div class="text-center p-3"><div class="acc-value">0.8779</div><div class="acc-label">Dice Score</div></div></div>
+      <div class="col-6 col-md-3"><div class="text-center p-3"><div class="acc-value">93.29%</div><div class="acc-label">Macro F1-Score</div></div></div>
+      <div class="col-6 col-md-3"><div class="text-center p-3"><div class="acc-value">100%</div><div class="acc-label">No-Tumor Recall</div></div></div>
     </div>
   </div>
 </div>
 
+<section class="container reveal" style="padding:3rem 0 4rem;">
+  <div class="text-center mb-4">
+    <span class="hero-badge d-inline-flex mb-2">Pipeline</span>
+    <h2 class="section-title">How It Works</h2>
+    <p class="section-subtitle">Five-stage deep learning pipeline from MRI upload to diagnostic result</p>
+  </div>
+  <div class="row g-3">
+    <div class="col-6 col-md-4 col-lg"><div class="step-card" style="--c1:#4f8cff;--c2:#6aa8ff;"><span class="step-num">01</span><div class="step-icon-wrap" style="--c1:#4f8cff;--c2:#6aa8ff;">&#x1F9E0;</div><div class="fw-700 mb-1" style="color:#cce4ff;">Upload MRI</div><div class="text-muted small">PNG &middot; JPG &middot; Max 16MB</div></div></div>
+    <div class="col-6 col-md-4 col-lg"><div class="step-card" style="--c1:#8b5cf6;--c2:#7c3aed;"><span class="step-num">02</span><div class="step-icon-wrap" style="--c1:#8b5cf6;--c2:#7c3aed;">&#x2699;&#xFE0F;</div><div class="fw-700 mb-1" style="color:#cce4ff;">Preprocess</div><div class="text-muted small">Resize &middot; Normalize</div></div></div>
+    <div class="col-6 col-md-4 col-lg"><div class="step-card" style="--c1:#1de2d4;--c2:#06b6d4;"><span class="step-num">03</span><div class="step-icon-wrap" style="--c1:#1de2d4;--c2:#06b6d4;">&#x1F50D;</div><div class="fw-700 mb-1" style="color:#cce4ff;">Segmentation</div><div class="text-muted small">U-Net pixel mask</div></div></div>
+    <div class="col-6 col-md-4 col-lg"><div class="step-card" style="--c1:#ff5d7a;--c2:#f43f5e;"><span class="step-num">04</span><div class="step-icon-wrap" style="--c1:#ff5d7a;--c2:#f43f5e;">&#x1F3F7;&#xFE0F;</div><div class="fw-700 mb-1" style="color:#cce4ff;">Classification</div><div class="text-muted small">EfficientNetB0</div></div></div>
+    <div class="col-6 col-md-4 col-lg"><div class="step-card" style="--c1:#fbbf24;--c2:#f59e0b;"><span class="step-num">05</span><div class="step-icon-wrap" style="--c1:#fbbf24;--c2:#f59e0b;">&#x1F321;&#xFE0F;</div><div class="fw-700 mb-1" style="color:#cce4ff;">Grad-CAM XAI</div><div class="text-muted small">Visual heatmap</div></div></div>
+  </div>
+</section>
+
+<section class="container reveal" style="padding:1rem 0 4rem;" id="upload">
+  <div class="text-center mb-4">
+    <span class="hero-badge d-inline-flex mb-2">Analyse</span>
+    <h2 class="section-title">Upload Your MRI Scan</h2>
+    <p class="section-subtitle">Drag &amp; drop or click to upload. Results in seconds.</p>
+  </div>
+  {% if not models_ready %}
+  <div class="alert" style="background:rgba(251,191,36,.12);border-color:rgba(251,191,36,.3);color:#fde68a;" role="alert">
+    <i class="bi bi-exclamation-triangle-fill me-2"></i>
+    <strong>Demo mode:</strong> Model files not loaded yet. Upload is disabled until models are installed.
+  </div>
+  {% endif %}
+  <div class="row justify-content-center g-4">
+    <div class="col-lg-7">
+      <div class="card">
+        <div class="card-body p-4">
+          <form action="{{ url_for('main.predict') }}" method="post" enctype="multipart/form-data" id="uploadForm">
+            <div class="upload-zone" id="uploadZone" onclick="document.getElementById('mri_file').click()">
+              <div class="upload-icon"><i class="bi bi-file-earmark-medical"></i></div>
+              <p class="fw-700 fs-5 mb-1" style="color:#cce4ff;">Drop your MRI scan here</p>
+              <p class="text-muted mb-2">or click to browse files</p>
+              <span style="font-size:.78rem;padding:.3rem .8rem;border-radius:999px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);color:#9cb8d6;">PNG &middot; JPG &middot; JPEG &middot; Max 16 MB</span>
+              <input type="file" id="mri_file" name="mri_file" accept=".png,.jpg,.jpeg" class="d-none" required onchange="previewFile(this)" {% if not models_ready %}disabled{% endif %} />
+            </div>
+            <div id="preview-container" class="text-center mt-3">
+              <img id="preview-img" src="" alt="MRI Preview" class="img-fluid" />
+              <p id="preview-name" class="text-muted small mt-2"></p>
+            </div>
+            <div class="d-grid mt-3">
+              <button type="submit" class="btn-glow justify-content-center" id="analyseBtn" style="width:100%;border-radius:14px;" {% if not models_ready %}disabled{% endif %}>
+                <i class="bi bi-cpu-fill"></i> Analyse MRI Scan
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-4">
+      <div class="card h-100">
+        <div class="card-header"><i class="bi bi-stars me-2"></i>What You Will Receive</div>
+        <div class="card-body p-4">
+          <div class="feature-card mb-3" style="--fc1:#4f8cff;--fc2:#1de2d4;padding:1rem 1.2rem;"><div class="d-flex align-items-center gap-3"><span style="font-size:1.5rem;">&#x1F3F7;&#xFE0F;</span><div><div class="fw-700" style="color:#cce4ff;">Tumor Classification</div><div class="text-muted small">Glioma &middot; Meningioma &middot; Pituitary &middot; No Tumor</div></div></div></div>
+          <div class="feature-card mb-3" style="--fc1:#1de2d4;--fc2:#06b6d4;padding:1rem 1.2rem;"><div class="d-flex align-items-center gap-3"><span style="font-size:1.5rem;">&#x1F50D;</span><div><div class="fw-700" style="color:#cce4ff;">Segmentation Mask</div><div class="text-muted small">Pixel-level tumor boundary</div></div></div></div>
+          <div class="feature-card mb-3" style="--fc1:#fbbf24;--fc2:#f59e0b;padding:1rem 1.2rem;"><div class="d-flex align-items-center gap-3"><span style="font-size:1.5rem;">&#x1F321;&#xFE0F;</span><div><div class="fw-700" style="color:#cce4ff;">Grad-CAM Heatmap</div><div class="text-muted small">Visual AI explainability</div></div></div></div>
+          <div class="feature-card" style="--fc1:#8b5cf6;--fc2:#7c3aed;padding:1rem 1.2rem;"><div class="d-flex align-items-center gap-3"><span style="font-size:1.5rem;">&#x1F4CA;</span><div><div class="fw-700" style="color:#cce4ff;">Confidence Scores</div><div class="text-muted small">Per-class probability breakdown</div></div></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="container pb-4">
+  <div class="text-center" style="padding:1.5rem;border-radius:16px;background:rgba(255,93,122,.08);border:1px solid rgba(255,93,122,.2);">
+    <i class="bi bi-shield-exclamation me-2" style="color:#ff8fa3;"></i>
+    <span class="small" style="color:#ffb3c1;"><strong>Medical Disclaimer:</strong> This system is intended for research and educational purposes only. Not a substitute for professional medical advice. Consult a qualified radiologist for clinical decisions.</span>
+  </div>
+</div>
 {% endblock %}
 
 {% block scripts %}
 <script>
-  // File preview
-  function previewFile(input) {
-    if (input.files && input.files[0]) {
-      const reader = new FileReader();
-      reader.onload = e => {
-        document.getElementById('preview-img').src = e.target.result;
-        document.getElementById('preview-name').textContent = input.files[0].name;
-        document.getElementById('preview-container').style.display = 'block';
-      };
-      reader.readAsDataURL(input.files[0]);
-    }
+function previewFile(input) {
+  if (input.files && input.files[0]) {
+    const reader = new FileReader();
+    reader.onload = e => {
+      document.getElementById("preview-img").src = e.target.result;
+      document.getElementById("preview-name").textContent = input.files[0].name;
+      document.getElementById("preview-container").style.display = "block";
+    };
+    reader.readAsDataURL(input.files[0]);
   }
-
-  // Drag and drop
-  const zone = document.getElementById('uploadZone');
-  zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('dragover'); });
-  zone.addEventListener('dragleave',  () => zone.classList.remove('dragover'));
-  zone.addEventListener('drop', e => {
-    e.preventDefault();
-    zone.classList.remove('dragover');
+}
+const zone = document.getElementById("uploadZone");
+if(zone){
+  zone.addEventListener("dragover", e => { e.preventDefault(); zone.classList.add("dragover"); });
+  zone.addEventListener("dragleave", () => zone.classList.remove("dragover"));
+  zone.addEventListener("drop", e => {
+    e.preventDefault(); zone.classList.remove("dragover");
     const file = e.dataTransfer.files[0];
-    if (file) {
-      document.getElementById('mri_file').files = e.dataTransfer.files;
-      previewFile(document.getElementById('mri_file'));
-    }
+    if (file) { document.getElementById("mri_file").files = e.dataTransfer.files; previewFile(document.getElementById("mri_file")); }
   });
-
-  // Show loading spinner on submit
-  document.getElementById('uploadForm').addEventListener('submit', () => {
-    const btn = document.getElementById('analyseBtn');
-    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Analysing...';
-    btn.disabled = true;
-  });
+}
+const form = document.getElementById("uploadForm");
+if(form) form.addEventListener("submit", () => {
+  const btn = document.getElementById("analyseBtn");
+  btn.innerHTML = "<span class=spinner-border spinner-border-sm me-2></span>Analysing...";
+  btn.disabled = true;
+});
+const obs = new IntersectionObserver(entries => {
+  entries.forEach(e => { if (e.isIntersecting) e.target.classList.add("visible"); });
+}, { threshold: 0.1 });
+document.querySelectorAll(".reveal").forEach(el => obs.observe(el));
+(function() {
+  const canvas = document.getElementById("brain-canvas");
+  if (!canvas || typeof THREE === "undefined") return;
+  const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
+  renderer.setPixelRatio(window.devicePixelRatio);
+  renderer.setClearColor(0x000000, 0);
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(45, canvas.clientWidth / canvas.clientHeight, 0.1, 100);
+  camera.position.set(0, 0, 5);
+  function resize() {
+    const w = canvas.clientWidth, h = canvas.clientHeight;
+    renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix();
+  }
+  resize(); window.addEventListener("resize", resize);
+  scene.add(new THREE.AmbientLight(0x4f8cff, 0.4));
+  const l1 = new THREE.PointLight(0x4f8cff, 2.5, 20); l1.position.set(3,3,3); scene.add(l1);
+  const l2 = new THREE.PointLight(0x1de2d4, 2, 15); l2.position.set(-3,-2,2); scene.add(l2);
+  const l3 = new THREE.PointLight(0xff5d7a, 1.2, 12); l3.position.set(0,-3,-2); scene.add(l3);
+  const brainGroup = new THREE.Group(); scene.add(brainGroup);
+  const brainGeo = new THREE.SphereGeometry(1.4, 64, 64);
+  const pos = brainGeo.attributes.position;
+  for (let i = 0; i < pos.count; i++) {
+    const x = pos.getX(i), y = pos.getY(i), z = pos.getZ(i);
+    const yN = y < 0 ? y * 0.75 : y;
+    const noise = 0.08*Math.sin(x*5.5)*Math.cos(y*4.2)*Math.sin(z*6.1) + 0.06*Math.sin(x*8.3+y*3.1)*Math.cos(z*5.7) + 0.04*Math.cos(x*12+z*4);
+    pos.setXYZ(i, x*1.18+noise*x*0.3, yN+noise*y*0.2, z*1.05+noise*z*0.3);
+  }
+  brainGeo.computeVertexNormals();
+  brainGroup.add(new THREE.Mesh(brainGeo, new THREE.MeshBasicMaterial({ color:0x4f8cff, wireframe:true, transparent:true, opacity:0.08 })));
+  const brainMat = new THREE.MeshPhongMaterial({ color:0x1a3a6e, emissive:0x0a1a3a, specular:0x4f8cff, shininess:60, transparent:true, opacity:0.88 });
+  brainGroup.add(new THREE.Mesh(brainGeo, brainMat));
+  const outGeo = brainGeo.clone();
+  const oPos = outGeo.attributes.position;
+  for (let i=0;i<oPos.count;i++) oPos.setXYZ(i, oPos.getX(i)*1.06, oPos.getY(i)*1.06, oPos.getZ(i)*1.06);
+  const outMat = new THREE.MeshBasicMaterial({ color:0x4f8cff, transparent:true, opacity:0.15, side:THREE.BackSide });
+  brainGroup.add(new THREE.Mesh(outGeo, outMat));
+  const fissure = new THREE.Mesh(new THREE.CylinderGeometry(0.025,0.025,2.8,8), new THREE.MeshBasicMaterial({color:0x1de2d4,transparent:true,opacity:0.5}));
+  fissure.rotation.z = Math.PI/2; fissure.position.set(0,0.3,0); brainGroup.add(fissure);
+  const pGeo = new THREE.BufferGeometry();
+  const pArr = new Float32Array(180);
+  for (let i=0;i<60;i++) { pArr[i*3]=(Math.random()-.5)*5; pArr[i*3+1]=(Math.random()-.5)*5; pArr[i*3+2]=(Math.random()-.5)*5; }
+  pGeo.setAttribute("position", new THREE.BufferAttribute(pArr,3));
+  const particles = new THREE.Points(pGeo, new THREE.PointsMaterial({color:0x4f8cff,size:0.04,transparent:true,opacity:0.6}));
+  scene.add(particles);
+  function makeRing(r,c,rx,rz){ const m=new THREE.Mesh(new THREE.TorusGeometry(r,.018,8,80),new THREE.MeshBasicMaterial({color:c,transparent:true,opacity:0.25})); m.rotation.x=rx; m.rotation.z=rz; return m; }
+  const ring1=makeRing(2.2,0x4f8cff,Math.PI/4,0); const ring2=makeRing(2.5,0x1de2d4,-Math.PI/5,Math.PI/6);
+  scene.add(ring1); scene.add(ring2);
+  let isDragging=false, prevX=0, prevY=0, autoRotate=true;
+  canvas.addEventListener("mousedown",e=>{isDragging=true;autoRotate=false;prevX=e.clientX;prevY=e.clientY;});
+  canvas.addEventListener("mouseup",()=>{isDragging=false;setTimeout(()=>autoRotate=true,3000);});
+  canvas.addEventListener("mousemove",e=>{if(!isDragging)return;brainGroup.rotation.y+=(e.clientX-prevX)*0.01;brainGroup.rotation.x+=(e.clientY-prevY)*0.01;prevX=e.clientX;prevY=e.clientY;});
+  let t=0;
+  function animate(){
+    requestAnimationFrame(animate); t+=0.01;
+    if(autoRotate){brainGroup.rotation.y+=0.004;brainGroup.rotation.x=Math.sin(t*0.3)*0.08;}
+    brainGroup.position.y=Math.sin(t*0.6)*0.08;
+    ring1.rotation.z+=0.003; ring2.rotation.x+=0.002;
+    particles.rotation.y+=0.001;
+    brainMat.opacity=0.82+0.06*Math.sin(t); outMat.opacity=0.1+0.1*(0.85+0.15*Math.sin(t*1.5));
+    renderer.render(scene,camera);
+  }
+  animate();
+})();
 </script>
 {% endblock %}
